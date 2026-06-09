@@ -9,9 +9,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: white; }
-        .peringkat-1 { background: linear-gradient(to right, #fbbf24, #d97706); color: #451a03; transform: scale(1.02); }
+        .peringkat-1 { background: linear-gradient(to right, #fbbf24, #d97706); color: #451a03; transform: scale(1.01); }
         .peringkat-2 { background: linear-gradient(to right, #94a3b8, #64748b); color: #f8fafc; }
         .peringkat-3 { background: linear-gradient(to right, #b45309, #78350f); color: #fffbeb; }
+        .bar-animasi { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-6">
@@ -28,11 +29,11 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto">
         <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
-            <div class="grid grid-cols-12 gap-4 p-4 bg-slate-900 border-b border-slate-700 font-bold text-slate-400 text-sm uppercase tracking-wider">
+            <div class="grid grid-cols-12 gap-4 p-4 bg-slate-900 border-b border-slate-700 font-bold text-slate-400 text-sm uppercase tracking-wider items-center">
                 <div class="col-span-1 text-center">Rank</div>
-                <div class="col-span-4">Nama Peserta</div>
-                <div class="col-span-4">Asal Sekolah</div>
-                <div class="col-span-3 text-right">Skor Total</div>
+                <div class="col-span-4">Identitas Peserta</div>
+                <div class="col-span-5 text-center">Grafik Progres Nilai</div>
+                <div class="col-span-2 text-right">Skor Total</div>
             </div>
             
             <div id="papanSkor" class="divide-y divide-slate-700/50 relative min-h-[300px]">
@@ -46,36 +47,68 @@
     <footer class="w-full text-center p-4 text-xs text-slate-500 mt-6">&copy; 2026 Panitia HUT SPENSANECI 57.</footer>
 
     <script>
-        // URL APPS SCRIPT TERBARU SUDAH TERPASANG DI SINI
         const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbzRHQYR_71ygdOjv5GFnbp04uvxNR_IU_GrVAo7OXyoU-p20bAzzFy4f_I4ZEka3VnK/exec";
+        
+        // 🛠️ UBAH TOTAL SOAL DI SINI AGAR PANJANG LOADING BAR SESUAI (100%)
+        const TOTAL_SOAL = 40; 
 
         async function muatDataLeaderboard() {
             try {
                 const respon = await fetch(URL_GOOGLE_SHEET + "?p=leaderboard");
-                const dataPeserta = await respon.json();
+                const dataMentah = await respon.json();
                 
                 const wadahPapan = document.getElementById('papanSkor');
-                wadahPapan.innerHTML = ""; 
 
-                if (dataPeserta.length === 0) {
+                if (!dataMentah || dataMentah.length === 0) {
                     wadahPapan.innerHTML = `<div class="p-8 text-center text-slate-500 italic">Belum ada peserta yang mengumpulkan skor.</div>`;
                     return;
                 }
 
+                // 🔥 PROSES ANTI-DOBEL: Menyaring data duplikat secara real-time
+                let dataSaring = {};
+                dataMentah.forEach(item => {
+                    // Membuat ID unik gabungan dari nama dan sekolah jika nomor peserta tidak terbawa
+                    const idUnik = item.noPeserta || (item.namaPeserta + "_" + item.asalSekolah);
+                    const skorAngka = parseInt(item.skor) || 0;
+
+                    // Ambil baris data hanya jika belum terdaftar, atau jika skor baris baru lebih tinggi
+                    if (!dataSaring[idUnik] || skorAngka > dataSaring[idUnik].skor) {
+                        dataSaring[idUnik] = item;
+                    }
+                });
+
+                // Mengubah objek hasil saringan menjadi array dan urutkan dari skor tertinggi
+                const dataPeserta = Object.values(dataSaring).sort((a, b) => (parseInt(b.skor) || 0) - (parseInt(a.skor) || 0));
+
+                // Reset layar animasi loading awal sebelum diisi data bersih
+                wadahPapan.innerHTML = ""; 
+
                 dataPeserta.forEach((peserta, index) => {
                     let gayaKhusus = "";
                     let ikonMahkota = "";
+                    // Penyesuaian warna indikator loading bar agar kontras di setiap baris podium
+                    let warnaBatang = "bg-gradient-to-r from-blue-500 to-indigo-500"; 
+                    let bgTrekBatang = "bg-slate-950/40 border-slate-700";
                     
-                    // Desain podium khusus juara 1, 2, dan 3
+                    // Hitung persentase grafik batang (maksimal 100%)
+                    const persentase = Math.min(((parseInt(peserta.skor) || 0) / TOTAL_SOAL) * 100, 100);
+
+                    // Desain podium khusus juara 1, 2, dan 3 sesuai CSS kamu
                     if (index === 0) { 
                         gayaKhusus = "peringkat-1 shadow-lg shadow-amber-500/20 font-bold z-10 relative"; 
-                        ikonMahkota = '<i class="fas fa-crown text-amber-900 mr-2"></i>'; 
+                        ikonMahkota = '<i class="fas fa-crown text-amber-950 mr-2"></i>'; 
+                        warnaBatang = "bg-amber-950"; 
+                        bgTrekBatang = "bg-amber-100/30 border-amber-400";
                     } else if (index === 1) { 
                         gayaKhusus = "peringkat-2 font-bold"; 
-                        ikonMahkota = '<i class="fas fa-medal text-slate-200 mr-2"></i>'; 
+                        ikonMahkota = '<i class="fas fa-medal text-slate-100 mr-2"></i>'; 
+                        warnaBatang = "bg-slate-200 text-slate-900";
+                        bgTrekBatang = "bg-slate-900/30 border-slate-400";
                     } else if (index === 2) { 
                         gayaKhusus = "peringkat-3 font-bold"; 
-                        ikonMahkota = '<i class="fas fa-award text-amber-200 mr-2"></i>'; 
+                        ikonMahkota = '<i class="fas fa-award text-amber-300 mr-2"></i>'; 
+                        warnaBatang = "bg-amber-300 text-amber-950";
+                        bgTrekBatang = "bg-amber-950/40 border-amber-600";
                     } else { 
                         gayaKhusus = "hover:bg-slate-700/50 transition text-slate-200"; 
                     }
@@ -83,9 +116,21 @@
                     const barisHtml = `
                         <div class="grid grid-cols-12 gap-4 p-4 items-center ${gayaKhusus}">
                             <div class="col-span-1 text-center font-black text-lg opacity-80">#${index + 1}</div>
-                            <div class="col-span-4 font-semibold text-lg truncate">${ikonMahkota}${peserta.namaPeserta}</div>
-                            <div class="col-span-4 text-sm opacity-90 truncate"><i class="fas fa-school mr-2 opacity-50"></i>${peserta.asalSekolah}</div>
-                            <div class="col-span-3 text-right font-black text-2xl tracking-tighter">${peserta.skor} <span class="text-xs font-normal opacity-70 tracking-normal">PTS</span></div>
+                            
+                            <div class="col-span-4 truncate pr-2">
+                                <div class="font-bold text-base truncate flex items-center">${ikonMahkota}${peserta.namaPeserta}</div>
+                                <div class="text-xs opacity-75 truncate mt-0.5"><i class="fas fa-school mr-1.5 opacity-60"></i>${peserta.asalSekolah}</div>
+                            </div>
+                            
+                            <div class="col-span-5 px-2">
+                                <div class="w-full ${bgTrekBatang} h-3.5 rounded-full overflow-hidden p-[2px] border shadow-inner">
+                                    <div class="${warnaBatang} h-full rounded-full bar-animasi shadow" style="width: ${persentase}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-span-2 text-right font-black text-2xl tracking-tighter">
+                                ${peserta.skor} <span class="text-xs font-normal opacity-70 tracking-normal">PTS</span>
+                            </div>
                         </div>
                     `;
                     wadahPapan.innerHTML += barisHtml;
