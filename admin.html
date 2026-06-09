@@ -21,10 +21,10 @@
 <body class="min-h-screen flex flex-col p-4 md:p-6">
     
     <header class="text-center mb-8 flex flex-col items-center mt-4">
-        <!-- LOGO KIRI & KANAN -->
-        <div class="flex justify-center items-center gap-5 mb-5">
+        <!-- LOGO KIRI & KANAN (DIBUAT LINGKARAN SERAGAM) -->
+        <div class="flex justify-center items-center gap-6 mb-5">
             <img src="./logo.png" alt="Logo 1" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
-            <img src="./logo2.png" alt="Logo 2" class="w-20 h-20 md:w-24 md:h-24 object-contain drop-shadow-md">
+            <img src="./logo2.png" alt="Logo 2" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
         </div>
 
         <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500 uppercase tracking-widest drop-shadow-sm">
@@ -77,7 +77,7 @@
                     return;
                 }
 
-                // 🔥 ANTI-DOBEL TINGKAT TINGGI (Menghapus spasi gaib & menyamakan huruf)
+                // 🔥 ANTI-DOBEL TINGKAT TINGGI
                 let dataSaring = {};
                 dataMentah.forEach(item => {
                     const noClean = item.noPeserta ? item.noPeserta.toString().trim().toLowerCase() : "";
