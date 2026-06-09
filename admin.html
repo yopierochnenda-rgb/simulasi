@@ -6,6 +6,10 @@
     <title>Live Score - SPENSANECI 57</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tambahan Library untuk Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; color: #1e293b; }
@@ -20,11 +24,11 @@
 </head>
 <body class="min-h-screen flex flex-col p-4 md:p-6">
     
-    <header class="text-center mb-8 flex flex-col items-center mt-4">
-        <!-- LOGO KIRI & KANAN (DIBUAT LINGKARAN SERAGAM) -->
+    <header class="text-center mb-6 flex flex-col items-center mt-4">
+        <!-- LOGO KIRI & KANAN -->
         <div class="flex justify-center items-center gap-6 mb-5">
-            <img src="./logo.png" alt="Logo 1" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
-            <img src="./logo2.png" alt="Logo 2" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
+            <img id="logoKiri" src="./logo.png" alt="Logo 1" crossorigin="anonymous" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
+            <img id="logoKanan" src="./logo2.png" alt="Logo 2" crossorigin="anonymous" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
         </div>
 
         <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500 uppercase tracking-widest drop-shadow-sm">
@@ -32,9 +36,15 @@
         </h1>
         <p class="text-slate-600 mt-2 font-bold tracking-wide">LOMBA MATA PELAJARAN HUT SPENSANECI 57</p>
         
-        <div class="mt-4 inline-flex items-center bg-white border border-slate-200 shadow-sm rounded-full px-4 py-1.5 text-xs text-indigo-600 font-bold">
-            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping mr-2.5"></span>
-            Terhubung ke Database (Auto-Refresh 3s)
+        <div class="flex flex-col md:flex-row items-center gap-3 mt-4">
+            <div class="inline-flex items-center bg-white border border-slate-200 shadow-sm rounded-full px-4 py-2 text-xs text-indigo-600 font-bold">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping mr-2.5"></span>
+                Terhubung ke Database (Auto-Refresh 3s)
+            </div>
+            <!-- Tombol Unduh PDF -->
+            <button onclick="buatPDF()" class="inline-flex items-center bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-md rounded-full px-5 py-2 text-xs font-bold transition-all transform hover:scale-105">
+                <i class="fas fa-file-pdf mr-2"></i> Unduh Berita Acara (PDF)
+            </button>
         </div>
     </header>
 
@@ -64,6 +74,9 @@
         
         // 🛠️ UBAH TOTAL SOAL DI SINI AGAR PANJANG LOADING BAR SESUAI (100%)
         const TOTAL_SOAL = 40; 
+        
+        // Simpan data global untuk di-export ke PDF
+        let dataPesertaGlobal = [];
 
         async function muatDataLeaderboard() {
             try {
@@ -94,11 +107,12 @@
                     }
                 });
 
-                const dataPeserta = Object.values(dataSaring).sort((a, b) => (parseInt(b.skor) || 0) - (parseInt(a.skor) || 0));
+                // Update data global & urutkan
+                dataPesertaGlobal = Object.values(dataSaring).sort((a, b) => (parseInt(b.skor) || 0) - (parseInt(a.skor) || 0));
 
                 wadahPapan.innerHTML = ""; 
 
-                dataPeserta.forEach((peserta, index) => {
+                dataPesertaGlobal.forEach((peserta, index) => {
                     let gayaKhusus = "";
                     let ikonMahkota = "";
                     let warnaBatang = ""; 
@@ -106,7 +120,6 @@
                     
                     const persentase = Math.min(((parseInt(peserta.skor) || 0) / TOTAL_SOAL) * 100, 100);
 
-                    // Pewarnaan Mode Terang (Light Mode)
                     if (index === 0) { 
                         gayaKhusus = "peringkat-1 shadow-lg shadow-amber-500/10 font-bold z-10 relative"; 
                         ikonMahkota = '<i class="fas fa-crown text-amber-500 text-lg mr-2 drop-shadow-sm"></i>'; 
@@ -154,6 +167,117 @@
             } catch (err) {
                 console.log("Menunggu koneksi ulang database...", err);
             }
+        }
+
+        // FUNGSI UNTUK MENGAMBIL GAMBAR LOGO KE FORMAT BASE64
+        function getBase64Image(imgId) {
+            const img = document.getElementById(imgId);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            return canvas.toDataURL("image/png");
+        }
+
+        // FUNGSI MEMBUAT PDF (BERITA ACARA)
+        function buatPDF() {
+            if (dataPesertaGlobal.length === 0) {
+                alert("Data peserta belum termuat. Harap tunggu sebentar.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            // 1. KOP SURAT (LOGO KIRI, TEKS TENGAH, LOGO KANAN)
+            try {
+                const logoKiri = getBase64Image("logoKiri");
+                const logoKanan = getBase64Image("logoKanan");
+                doc.addImage(logoKiri, 'PNG', 15, 10, 22, 22);
+                doc.addImage(logoKanan, 'PNG', pageWidth - 37, 10, 22, 22);
+            } catch (e) {
+                console.warn("Logo tidak dapat dimuat ke PDF karena isu Cross-Origin. Lanjut tanpa logo.");
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("PANITIA HUT SEMARAK SPENSANECI 57", pageWidth / 2, 18, { align: "center" });
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text("SMP NEGERI 1 CIPARI", pageWidth / 2, 24, { align: "center" });
+            
+            // Garis Pembatas Kop
+            doc.setLineWidth(0.8);
+            doc.line(15, 35, pageWidth - 15, 35);
+            doc.setLineWidth(0.3);
+            doc.line(15, 36, pageWidth - 15, 36);
+
+            // 2. JUDUL BERITA ACARA
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.text("BERITA ACARA HASIL LOMBA MATA PELAJARAN", pageWidth / 2, 50, { align: "center" });
+            doc.setLineWidth(0.4);
+            doc.line(pageWidth / 2 - 48, 51, pageWidth / 2 + 48, 51); // Garis bawah judul
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            const tanggalSekarang = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            doc.text(`Telah dilaksanakan Lomba Mata Pelajaran dalam rangka HUT SPENSANECI 57,`, 15, 62);
+            doc.text(`berikut adalah rekapitulasi hasil akhir seluruh peserta:`, 15, 68);
+
+            // 3. TABEL DATA (Memakai plugin AutoTable)
+            const tableData = dataPesertaGlobal.map((p, i) => [
+                i + 1,
+                p.namaPeserta || "-",
+                p.asalSekolah || "-",
+                p.skor || "0"
+            ]);
+
+            doc.autoTable({
+                startY: 75,
+                head: [['Peringkat', 'Nama Peserta', 'Asal Sekolah', 'Skor Akhir']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229], halign: 'center' }, // Warna Indigo-600
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 25 },
+                    3: { halign: 'center', cellWidth: 30, fontStyle: 'bold' }
+                },
+                styles: { fontSize: 10, cellPadding: 3 }
+            });
+
+            // 4. BAGIAN TANDA TANGAN
+            const finalY = doc.lastAutoTable.finalY + 20; 
+            
+            // Cek apakah muat di halaman ini, jika tidak, tambah halaman baru
+            if (finalY > pageHeight - 50) {
+                doc.addPage();
+            }
+
+            const currentY = doc.lastAutoTable.finalY > pageHeight - 50 ? 30 : finalY;
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            
+            doc.text(`Cipari, ${tanggalSekarang}`, pageWidth - 15, currentY, { align: "right" });
+            doc.text("Mengetahui,", 15, currentY + 6);
+            
+            doc.text("Ketua Panitia", 15, currentY + 12);
+            doc.text("Pj. Lomba Mapel", pageWidth - 15, currentY + 12, { align: "right" });
+
+            // Space untuk Tanda Tangan
+            doc.setFont("helvetica", "bold");
+            doc.text("_______________________", 15, currentY + 35);
+            doc.text("Rodiyah S.Pd", pageWidth - 15, currentY + 35, { align: "right" });
+            doc.setFont("helvetica", "normal");
+            doc.text("NIP. ..............................", pageWidth - 15, currentY + 41, { align: "right" });
+
+            // 5. SIMPAN PDF
+            doc.save(`Berita_Acara_Hasil_Lomba_Spensaneci57.pdf`);
         }
 
         muatDataLeaderboard();
