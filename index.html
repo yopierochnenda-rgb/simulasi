@@ -10,27 +10,26 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col justify-between text-gray-800">
 
-    <!-- Header -->
     <header class="w-full p-4 flex justify-between items-center bg-indigo-700 text-white shadow-md">
         <div class="flex items-center space-x-3">
-            <!-- LOGO UTAMA DI POJOK KIRI ATAS -->
             <img src="./logo.png" alt="Logo SPENSANECI" class="w-12 h-12 object-contain bg-white rounded-full p-1 shadow-sm">
             <div>
                 <h1 class="font-bold tracking-wide text-sm md:text-base">HUT SPENSANECI 57</h1>
                 <p class="text-xs text-indigo-200">Mode Ujian CAT Bersistem</p>
             </div>
         </div>
-        <div id="timerDisplay" class="hidden text-xs bg-red-500 px-4 py-2 rounded-lg font-bold animate-pulse"><i class="fas fa-clock mr-1"></i> Ujian Berlangsung</div>
+        <div id="timerDisplay" class="hidden text-sm bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-bold shadow-inner flex items-center">
+            <i class="fas fa-stopwatch mr-2 text-yellow-400"></i> 
+            <span id="waktuMundur" class="tracking-wider">90:00</span>
+        </div>
     </header>
 
     <main class="flex-grow flex items-start justify-center p-4 md:p-6 w-full max-w-6xl mx-auto">
         
-        <!-- FORM LOGIN -->
         <div id="loginContainer" class="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 relative mt-10">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-2xl"></div>
             
             <div class="text-center mb-6 flex flex-col items-center">
-                <!-- LOGO KEDUA DI ATAS FORM LOGIN -->
                 <img src="./logo2.png" alt="Logo Lomba" class="w-24 h-24 object-contain mb-4 drop-shadow-md">
                 
                 <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Konfirmasi Peserta</span>
@@ -56,10 +55,8 @@
             </form>
         </div>
 
-        <!-- DASHBOARD UJIAN (LAYAR TERBAGI) -->
         <div id="quizContainer" class="hidden w-full flex-col md:flex-row gap-6">
             
-            <!-- KIRI: KOTAK SOAL -->
             <div class="flex-grow bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
                 <div class="flex justify-between items-center border-b pb-4 mb-6">
                     <div>
@@ -71,18 +68,14 @@
                     </div>
                 </div>
 
-                <!-- Tempat Gambar -->
                 <div id="imageWrapper" class="hidden w-full mb-6 flex justify-center bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <img id="questionImage" src="" alt="Soal" class="max-h-64 object-contain rounded-lg shadow-sm" onerror="this.parentElement.classList.add('hidden')">
                 </div>
                 
-                <!-- Teks Soal -->
                 <h3 id="questionText" class="text-lg md:text-xl font-bold text-gray-800 mb-6 whitespace-pre-wrap leading-relaxed">Memuat soal...</h3>
                 
-                <!-- Pilihan Ganda -->
                 <div id="optionsContainer" class="flex flex-col space-y-3 mb-8"></div>
                 
-                <!-- Navigasi Bawah Soal -->
                 <div class="pt-5 border-t border-slate-200 flex flex-wrap justify-between items-center gap-4">
                     <button id="prevBtn" onclick="prevQuestion()" class="bg-slate-100 text-slate-700 font-semibold py-2.5 px-5 rounded-xl border border-slate-300 hover:bg-slate-200 transition flex items-center space-x-2">
                         <i class="fas fa-chevron-left text-xs"></i> <span>Sebelumnya</span>
@@ -99,7 +92,6 @@
                 </div>
             </div>
 
-            <!-- KANAN: PALET NOMOR CAT -->
             <div class="w-full md:w-80 bg-white rounded-2xl shadow-xl p-6 border border-slate-200 h-fit sticky top-6">
                 <h3 class="font-bold text-gray-800 text-center mb-4 border-b pb-2">Navigasi Soal</h3>
                 
@@ -111,16 +103,15 @@
 
                 <div id="nomorCat" class="grid grid-cols-5 gap-2 mb-6"></div>
 
-                <button onclick="akhiriUjian()" class="w-full bg-red-100 text-red-700 border border-red-300 font-bold py-3 rounded-xl hover:bg-red-500 hover:text-white transition shadow-sm flex items-center justify-center space-x-2">
+                <button onclick="akhiriUjian(false)" class="w-full bg-red-100 text-red-700 border border-red-300 font-bold py-3 rounded-xl hover:bg-red-500 hover:text-white transition shadow-sm flex items-center justify-center space-x-2">
                     <i class="fas fa-flag-checkered"></i> <span>Akhiri Ujian</span>
                 </button>
             </div>
         </div>
 
-        <!-- DASHBOARD SELESAI -->
         <div id="resultContainer" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 text-center hidden mt-10">
             <div class="text-emerald-500 text-6xl mb-4"><i class="fas fa-check-circle"></i></div>
-            <h2 class="text-2xl font-bold text-gray-800">Ujian Telah Selesai!</h2>
+            <h2 class="text-2xl font-bold text-gray-800" id="pesanSelesai">Ujian Telah Selesai!</h2>
             <p class="text-slate-500 text-sm mt-2">Terima kasih atas partisipasi Anda.</p>
             <div class="my-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                 <p class="text-xs text-slate-400 uppercase font-bold tracking-widest">Skor Akhir Anda</p>
@@ -140,9 +131,12 @@
         let indexSekarang = 0;
         let skor = 0;
         let skorPerNomor = {};
-        
         let riwayatJawabanSiswa = {}; 
         let riwayatRagu = {};         
+        
+        // VARIABEL TIMER
+        let durasiUjian = 90 * 60; // 90 Menit x 60 Detik
+        let timerInterval;
 
         async function startExam(event) {
             event.preventDefault();
@@ -170,9 +164,38 @@
                 document.getElementById('quizContainer').classList.add('flex'); 
 
                 tampilkanSoal();
+                mulaiTimer(); // Panggil fungsi hitung mundur
             } catch (err) {
                 alert("Gagal koneksi. Cek internet!"); location.reload();
             }
+        }
+
+        // FUNGSI HITUNG MUNDUR WAKTU
+        function mulaiTimer() {
+            const display = document.getElementById('waktuMundur');
+            const wadahWaktu = document.getElementById('timerDisplay');
+            
+            timerInterval = setInterval(function () {
+                let menit = parseInt(durasiUjian / 60, 10);
+                let detik = parseInt(durasiUjian % 60, 10);
+
+                menit = menit < 10 ? "0" + menit : menit;
+                detik = detik < 10 ? "0" + detik : detik;
+
+                display.textContent = menit + ":" + detik;
+
+                // Animasi merah berkedip jika waktu kurang dari 5 menit (300 detik)
+                if (durasiUjian < 300) {
+                    wadahWaktu.classList.replace('bg-slate-800', 'bg-red-600');
+                    wadahWaktu.classList.add('animate-pulse');
+                }
+
+                // Jika waktu menyentuh 0
+                if (--durasiUjian < 0) {
+                    clearInterval(timerInterval); // Matikan stopwach
+                    akhiriUjian(true); // Akhiri ujian dengan status waktuHabis = true
+                }
+            }, 1000);
         }
 
         function renderPaletCAT() {
@@ -299,7 +322,7 @@
             if (indexSekarang < urutanSoal.length - 1) {
                 indexSekarang++; tampilkanSoal();
             } else {
-                akhiriUjian();
+                akhiriUjian(false);
             }
         }
 
@@ -309,9 +332,22 @@
             }
         }
 
-        function akhiriUjian() {
-            const konfirmasi = confirm("YAKIN INGIN MENGAKHIRI UJIAN?\n\nPastikan Anda sudah mengecek kembali soal-soal yang berwarna merah (Belum dijawab) atau kuning (Ragu-ragu).");
+        // DITAMBAHKAN PARAMETER WAKTU HABIS
+        function akhiriUjian(waktuHabis = false) {
+            let konfirmasi = true;
+
+            if (!waktuHabis) {
+                // Jika diklik manual oleh peserta
+                konfirmasi = confirm("YAKIN INGIN MENGAKHIRI UJIAN?\n\nPastikan Anda sudah mengecek kembali soal-soal yang berwarna merah (Belum dijawab) atau kuning (Ragu-ragu).");
+            } else {
+                // Jika dipaksa karena waktu habis
+                alert("WAKTU HABIS!\n\nUjian otomatis diakhiri. Jangan khawatir, poin yang sudah Anda kumpulkan tetap dihitung.");
+                document.getElementById('pesanSelesai').innerText = "Waktu Habis!";
+                document.getElementById('pesanSelesai').classList.replace('text-gray-800', 'text-red-600');
+            }
+
             if (konfirmasi) {
+                clearInterval(timerInterval); // Matikan timer
                 document.getElementById('quizContainer').classList.remove('flex');
                 document.getElementById('quizContainer').classList.add('hidden');
                 document.getElementById('timerDisplay').classList.add('hidden');
