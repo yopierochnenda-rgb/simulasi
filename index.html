@@ -154,7 +154,9 @@
                 }
 
                 const jumlahSoalLomba = bankSoal.length; 
-                urutanSoal = bankSoal.sort(() => 0.5 - Math.random()).slice(0, jumlahSoalLomba);
+                
+                // [DIUBAH DISINI] Menghapus fungsi Math.random() agar soal berurutan sesuai urutan di Sheets
+                urutanSoal = bankSoal.slice(0, jumlahSoalLomba);
 
                 document.getElementById('displayNama').innerText = document.getElementById('namaPeserta').value;
 
