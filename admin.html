@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Score - SPENSANECI 57</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: white; }
+        .peringkat-1 { background: linear-gradient(to right, #fbbf24, #d97706); color: #451a03; transform: scale(1.02); }
+        .peringkat-2 { background: linear-gradient(to right, #94a3b8, #64748b); color: #f8fafc; }
+        .peringkat-3 { background: linear-gradient(to right, #b45309, #78350f); color: #fffbeb; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-6">
+    
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 uppercase tracking-widest">
+            Live Leaderboard
+        </h1>
+        <p class="text-slate-400 mt-2 font-semibold">LOMBA MATA PELAJARAN HUT SPENSANECI 57</p>
+        <div class="mt-3 inline-block bg-slate-800 border border-slate-700 rounded-full px-4 py-1 text-xs text-emerald-400 font-bold animate-pulse">
+            <i class="fas fa-satellite-dish mr-1"></i> Terhubung ke Database (Auto-Refresh 3s)
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl w-full mx-auto">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="grid grid-cols-12 gap-4 p-4 bg-slate-900 border-b border-slate-700 font-bold text-slate-400 text-sm uppercase tracking-wider">
+                <div class="col-span-1 text-center">Rank</div>
+                <div class="col-span-4">Nama Peserta</div>
+                <div class="col-span-4">Asal Sekolah</div>
+                <div class="col-span-3 text-right">Skor Total</div>
+            </div>
+            
+            <div id="papanSkor" class="divide-y divide-slate-700/50 relative min-h-[300px]">
+                <div class="absolute inset-0 flex items-center justify-center text-slate-500">
+                    <i class="fas fa-circle-notch fa-spin text-3xl mb-2"></i>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full text-center p-4 text-xs text-slate-500 mt-6">&copy; 2026 Panitia HUT SPENSANECI 57.</footer>
+
+    <script>
+        // URL APPS SCRIPT TERBARU SUDAH TERPASANG DI SINI
+        const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbzRHQYR_71ygdOjv5GFnbp04uvxNR_IU_GrVAo7OXyoU-p20bAzzFy4f_I4ZEka3VnK/exec";
+
+        async function muatDataLeaderboard() {
+            try {
+                const respon = await fetch(URL_GOOGLE_SHEET + "?p=leaderboard");
+                const dataPeserta = await respon.json();
+                
+                const wadahPapan = document.getElementById('papanSkor');
+                wadahPapan.innerHTML = ""; 
+
+                if (dataPeserta.length === 0) {
+                    wadahPapan.innerHTML = `<div class="p-8 text-center text-slate-500 italic">Belum ada peserta yang mengumpulkan skor.</div>`;
+                    return;
+                }
+
+                dataPeserta.forEach((peserta, index) => {
+                    let gayaKhusus = "";
+                    let ikonMahkota = "";
+                    
+                    // Desain podium khusus juara 1, 2, dan 3
+                    if (index === 0) { 
+                        gayaKhusus = "peringkat-1 shadow-lg shadow-amber-500/20 font-bold z-10 relative"; 
+                        ikonMahkota = '<i class="fas fa-crown text-amber-900 mr-2"></i>'; 
+                    } else if (index === 1) { 
+                        gayaKhusus = "peringkat-2 font-bold"; 
+                        ikonMahkota = '<i class="fas fa-medal text-slate-200 mr-2"></i>'; 
+                    } else if (index === 2) { 
+                        gayaKhusus = "peringkat-3 font-bold"; 
+                        ikonMahkota = '<i class="fas fa-award text-amber-200 mr-2"></i>'; 
+                    } else { 
+                        gayaKhusus = "hover:bg-slate-700/50 transition text-slate-200"; 
+                    }
+
+                    const barisHtml = `
+                        <div class="grid grid-cols-12 gap-4 p-4 items-center ${gayaKhusus}">
+                            <div class="col-span-1 text-center font-black text-lg opacity-80">#${index + 1}</div>
+                            <div class="col-span-4 font-semibold text-lg truncate">${ikonMahkota}${peserta.namaPeserta}</div>
+                            <div class="col-span-4 text-sm opacity-90 truncate"><i class="fas fa-school mr-2 opacity-50"></i>${peserta.asalSekolah}</div>
+                            <div class="col-span-3 text-right font-black text-2xl tracking-tighter">${peserta.skor} <span class="text-xs font-normal opacity-70 tracking-normal">PTS</span></div>
+                        </div>
+                    `;
+                    wadahPapan.innerHTML += barisHtml;
+                });
+
+            } catch (err) {
+                console.log("Menunggu koneksi ulang database...", err);
+            }
+        }
+
+        // Jalankan fungsi pertama kali saat halaman dibuka
+        muatDataLeaderboard();
+        
+        // Loop otomatis setiap 3000 milidetik (3 detik)
+        setInterval(muatDataLeaderboard, 3000);
+    </script>
+</body>
+</html>
