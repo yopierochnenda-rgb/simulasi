@@ -6,6 +6,7 @@
     <title>Live Score - SPENSANECI 57</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tambahan Library untuk Export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
@@ -24,6 +25,7 @@
 <body class="min-h-screen flex flex-col p-4 md:p-6">
     
     <header class="text-center mb-6 flex flex-col items-center mt-4">
+        <!-- LOGO KIRI & KANAN -->
         <div class="flex justify-center items-center gap-6 mb-5">
             <img id="logoKiri" src="./logo.png" alt="Logo 1" crossorigin="anonymous" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
             <img id="logoKanan" src="./logo2.png" alt="Logo 2" crossorigin="anonymous" class="w-16 h-16 md:w-20 md:h-20 object-contain bg-white rounded-full shadow-sm p-1.5 border border-slate-200">
@@ -39,6 +41,7 @@
                 <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping mr-2.5"></span>
                 Terhubung ke Database (Auto-Refresh 3s)
             </div>
+            <!-- Tombol Unduh PDF -->
             <button onclick="buatPDF()" class="inline-flex items-center bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-md rounded-full px-5 py-2 text-xs font-bold transition-all transform hover:scale-105">
                 <i class="fas fa-file-pdf mr-2"></i> Unduh Berita Acara (PDF)
             </button>
@@ -47,6 +50,7 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <!-- HEADER TABEL -->
             <div class="grid grid-cols-12 gap-4 p-4 bg-slate-100 border-b border-slate-200 font-bold text-slate-500 text-xs md:text-sm uppercase tracking-wider items-center">
                 <div class="col-span-1 text-center">Rank</div>
                 <div class="col-span-4 md:col-span-4">Identitas Peserta</div>
@@ -204,7 +208,6 @@
             
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            // REVISI NAMA SEKOLAH DI SINI
             doc.text("SMP NEGERI 1 CIBINGBIN", pageWidth / 2, 24, { align: "center" });
             
             // Garis Pembatas Kop
@@ -260,7 +263,6 @@
             doc.setFont("helvetica", "normal");
             doc.setFontSize(11);
             
-            // REVISI NAMA TEMPAT DI SINI
             doc.text(`Cibingbin, ${tanggalSekarang}`, pageWidth - 15, currentY, { align: "right" });
             doc.text("Mengetahui,", 15, currentY + 6);
             
@@ -269,10 +271,8 @@
 
             // Space untuk Tanda Tangan
             doc.setFont("helvetica", "bold");
-            // REVISI NAMA KETUA PANITIA DI SINI
-            doc.text("Eka Fitriya Santika, S.Pd.", 15, currentY + 35);
-            doc.text("Rodiyah, S.Pd.", pageWidth - 15, currentY + 35, { align: "right" });
-            
+            doc.text("_______________________", 15, currentY + 35);
+            doc.text("Rodiyah S.Pd", pageWidth - 15, currentY + 35, { align: "right" });
             doc.setFont("helvetica", "normal");
             doc.text("NIP. ..............................", pageWidth - 15, currentY + 41, { align: "right" });
 
